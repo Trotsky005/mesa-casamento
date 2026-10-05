@@ -1,9 +1,12 @@
 /**
  * Mesas Henrique & Livia — script da planilha
- * Cole este código em Extensões → Apps Script e implante como "App da Web".
+ * Cole este código num projeto novo em script.google.com e implante como "App da Web".
  *
  * A planilha precisa das colunas: Nome | Mesa | Chegou  (na primeira aba)
  */
+
+// Planilha "Mesas do Casamento (site)" no Google Drive
+var PLANILHA_ID = '1x9sVz9o3HLyXUlqZYYuPkZYtZKLWIh3UBlCJ03sa3EY';
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
@@ -16,7 +19,7 @@ function doGet(e) {
 }
 
 function aba() {
-  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  var sh = SpreadsheetApp.openById(PLANILHA_ID).getSheets()[0];
   if (String(sh.getRange(1, 3).getValue()).trim() === '') sh.getRange(1, 3).setValue('Chegou');
   return sh;
 }
