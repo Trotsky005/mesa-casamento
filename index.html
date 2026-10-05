@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Mesas Henrique &amp; Livia</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F1F4F1; --surface:#FFFFFF; --ink:#18201B; --muted:#5E6A62; --line:#D7DED8;
+  --accent:#3F6250; --soft:#E3ECE5; --ok:#2F7A4C; --warn:#8A5A12; --warn-bg:#FBF1DE;
+  --display:"Bodoni Moda", "Didot", Georgia, serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111614; --surface:#1A211D; --ink:#E9EFEA; --muted:#9AA79F; --line:#2C3631;
+  --accent:#A9CBB5; --soft:#223029; --ok:#7FD39F; --warn:#F0C27A; --warn-bg:#2E2414; color-scheme:dark}}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--body)}
+[hidden]{display:none!important}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:0 48px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:18px 12px;display:grid;gap:12px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand h1{font:500 1.6rem/1.1 var(--display);margin:0;letter-spacing:.01em}
+.brand h1 i{font-style:italic;color:var(--accent)}
+.brand small{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.search{position:relative}
+.search input{width:100%;font:500 1.15rem var(--body);padding:15px 48px 15px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);outline:none;-webkit-appearance:none}
+.search input:focus-visible{border-color:var(--accent);box-shadow:0 0 0 3px var(--soft)}
+.search button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--muted);font-size:1.4rem;width:40px;height:40px;border-radius:10px;cursor:pointer}
+.tabs{display:flex;gap:6px}
+.tabs button{flex:1;font:600 .85rem var(--body);padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.banner{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--warn-bg);color:var(--warn);font-size:.9rem}
+.stats{display:flex;justify-content:space-between;gap:8px;margin-top:14px;color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.stats button{border:0;background:none;color:var(--accent);font:600 .85rem var(--body);padding:0;cursor:pointer}
+.list{display:grid;gap:10px;margin-top:12px}
+.guest{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.guest .name{font-weight:600;font-size:1.1rem;min-width:0;overflow-wrap:anywhere}
+.guest .name mark{background:var(--soft);color:inherit;border-radius:3px;padding:0 1px}
+.guest .mesa{grid-row:span 2;text-align:center;min-width:76px}
+.guest .mesa span{display:block;font-size:.65rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.guest .mesa b{display:block;font:700 2.6rem/1 var(--display);color:var(--accent);font-variant-numeric:lining-nums tabular-nums}
+.guest .mesa b.long{font-size:1.2rem;line-height:1.2;max-width:120px;overflow-wrap:anywhere}
+.guest .sub{font-size:.85rem;color:var(--muted);min-width:0}
+.guest .actions{grid-column:1/-1;display:flex;gap:8px;margin-top:6px}
+.chk{font:600 .85rem var(--body);padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.chk.on{background:var(--ok);border-color:var(--ok);color:var(--bg)}
+.guest.arrived{opacity:.72}
+.empty{text-align:center;color:var(--muted);padding:40px 12px}
+.empty b{display:block;font:500 1.3rem var(--display);color:var(--ink);margin-bottom:6px}
+.table-group{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.table-group h3{margin:0 0 8px;display:flex;justify-content:space-between;align-items:baseline;font:700 1.4rem var(--display);color:var(--accent)}
+.table-group h3 small{font:500 .8rem var(--body);color:var(--muted)}
+.table-group ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.table-group li.ok{color:var(--muted);text-decoration:line-through}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Henrique <i>&amp;</i> Livia</h1><small>15 · 05 · 2027</small></div>
+    <div class="search"><input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Nome do convidado" aria-label="Buscar convidado pelo nome"><button id="clear" type="button" aria-label="Limpar busca" hidden>×</button></div>
+    <nav class="tabs" role="tablist">
+      <button id="tab-busca" role="tab" aria-selected="true" type="button">Buscar</button>
+      <button id="tab-mesas" role="tab" aria-selected="false" type="button">Mesas</button>
+    </nav>
+  </header>
+  <div id="banner" class="banner" hidden></div>
+  <section id="v-busca">
+    <div class="stats"><span id="st-total">Carregando lista…</span><span id="st-chegou"></span></div>
+    <div id="results" class="list"></div>
+  </section>
+  <section id="v-mesas" hidden><div id="mesas" class="list"></div></section>
+  <div class="stats"><span id="st-fonte"></span><button id="reload" type="button">Atualizar lista</button></div>
+</div>
+<script>
+/* De onde vem a lista. Quando a planilha Google for publicada como CSV, cole o link aqui. */
+var FONTE = 'convidados.csv';
+
+(function(){
+var guests=[];
+var $=function(id){return document.getElementById(id)};
+function norm(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim()}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function key(g){return norm(g.n)+'|'+norm(g.m)}
+function mesaSort(a,b){var x=parseFloat(a),y=parseFloat(b);if(!isNaN(x)&&!isNaN(y))return x-y;if(!isNaN(x))return 1;if(!isNaN(y))return -1;return a.localeCompare(b,'pt')}
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+
+var arrived=store('chegadas')||{};
+
+function parseCSV(text){
+  var rows=[],row=[],cell='',q=false;
+  for(var i=0;i<text.length;i++){var c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cell+='"';i++}else q=false}else cell+=c}
+    else if(c==='"')q=true;
+    else if(c===','||c===';'||c==='\t'){row.push(cell);cell=''}
+    else if(c==='\n'){row.push(cell);rows.push(row);row=[];cell=''}
+    else if(c!=='\r')cell+=c}
+  if(cell||row.length){row.push(cell);rows.push(row)}
+  var out=[];
+  rows.forEach(function(r,i){var n=(r[0]||'').trim(),m=(r[1]||'').trim().replace(/^mesa\s*/i,'');
+    if(i===0&&norm(n)==='nome')return; if(n&&m)out.push({n:n,m:m})});
+  return out;
+}
+
+function highlight(name,tokens){
+  var n=norm(name);if(n.length!==name.length||!tokens.length)return esc(name);
+  var marks=[];tokens.forEach(function(t){var i=n.indexOf(t);if(i>=0)marks.push([i,i+t.length])});
+  marks.sort(function(a,b){return a[0]-b[0]});var res='',pos=0;
+  marks.forEach(function(m){if(m[0]<pos)return;res+=esc(name.slice(pos,m[0]))+'<mark>'+esc(name.slice(m[0],m[1]))+'</mark>';pos=m[1]});
+  return res+esc(name.slice(pos));
+}
+function mates(g){return guests.filter(function(o){return o!==g&&norm(o.m)===norm(g.m)}).map(function(o){return o.n})}
+
+function renderBusca(){
+  var q=norm($('q').value),tokens=q?q.split(' '):[];$('clear').hidden=!q;
+  var total=guests.length,cheg=guests.filter(function(g){return arrived[key(g)]}).length;
+  $('st-total').textContent=total+(total===1?' convidado':' convidados');
+  $('st-chegou').textContent=cheg+' chegaram';
+  var box=$('results');
+  if(!total){box.innerHTML='<div class="empty"><b>Nenhum convidado na lista</b>Confira a planilha e toque em Atualizar lista.</div>';return}
+  if(!q){box.innerHTML='<div class="empty"><b>Digite o nome de quem chegou</b>Pode ser só o primeiro nome ou parte do sobrenome. Acentos não importam.</div>';return}
+  var hits=guests.filter(function(g){var n=norm(g.n);return tokens.every(function(t){return n.indexOf(t)>=0})});
+  hits.sort(function(a,b){var na=norm(a.n),nb=norm(b.n);return (na.indexOf(tokens[0])===0?0:1)-(nb.indexOf(tokens[0])===0?0:1)||na.localeCompare(nb)});
+  if(!hits.length){box.innerHTML='<div class="empty"><b>Ninguém encontrado</b>Tente só o primeiro nome ou só o sobrenome.</div>';return}
+  box.innerHTML=hits.map(function(g){var k=key(g),on=!!arrived[k],ms=mates(g),m=String(g.m);
+    return '<article class="guest'+(on?' arrived':'')+'"><div class="name">'+highlight(g.n,tokens)+'</div>'+
+      '<div class="mesa"><span>Mesa</span><b class="'+(m.length>3?'long':'')+'">'+esc(m)+'</b></div>'+
+      '<div class="sub">'+(ms.length?'Com '+esc(ms.slice(0,4).join(', '))+(ms.length>4?' e mais '+(ms.length-4):''):'Sozinho nesta mesa')+'</div>'+
+      '<div class="actions"><button class="chk'+(on?' on':'')+'" type="button" data-k="'+esc(k)+'">'+(on?'✓ Chegou':'Marcar chegada')+'</button></div></article>'}).join('');
+}
+function renderMesas(){
+  var groups={};guests.forEach(function(g){(groups[g.m]=groups[g.m]||[]).push(g)});
+  var ks=Object.keys(groups).sort(mesaSort);
+  $('mesas').innerHTML=ks.length?ks.map(function(m){var gs=groups[m].slice().sort(function(a,b){return a.n.localeCompare(b.n,'pt')});var c=gs.filter(function(g){return arrived[key(g)]}).length;
+    return '<div class="table-group"><h3>Mesa '+esc(m)+'<small>'+c+' de '+gs.length+' chegaram</small></h3><ul>'+gs.map(function(g){return '<li class="'+(arrived[key(g)]?'ok':'')+'">'+esc(g.n)+'</li>'}).join('')+'</ul></div>'}).join('')
+    :'<div class="empty"><b>Nenhuma mesa ainda</b></div>';
+}
+function renderAll(){renderBusca();renderMesas()}
+function hora(t){var d=new Date(t);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
+
+function load(){
+  $('st-fonte').textContent='Buscando lista…';
+  var url=FONTE+(FONTE.indexOf('?')<0?'?':'&')+'t='+Date.now();
+  fetch(url,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.text()}).then(function(t){
+    var list=parseCSV(t);if(!list.length)throw new Error('vazia');
+    guests=list;store('lista',{g:list,t:Date.now()});$('banner').hidden=true;
+    $('st-fonte').textContent='Lista atualizada '+hora(Date.now());renderAll();
+  }).catch(function(){
+    var c=store('lista');
+    if(c&&c.g){guests=c.g;$('st-fonte').textContent='Sem internet: usando a lista salva '+hora(c.t);}
+    else{$('st-fonte').textContent='';}
+    $('banner').textContent=c&&c.g?'Não deu para buscar a lista agora. A busca continua funcionando com a última versão salva neste celular.':'Não deu para carregar a lista. Confira a internet e toque em Atualizar lista.';
+    $('banner').hidden=false;renderAll();
+  });
+}
+
+function show(tab){['busca','mesas'].forEach(function(t){$('tab-'+t).setAttribute('aria-selected',t===tab);$('v-'+t).hidden=t!==tab})}
+$('tab-busca').onclick=function(){show('busca');$('q').focus()};
+$('tab-mesas').onclick=function(){show('mesas')};
+$('q').addEventListener('input',function(){show('busca');renderBusca()});
+$('clear').onclick=function(){$('q').value='';renderBusca();$('q').focus()};
+$('reload').onclick=load;
+$('results').addEventListener('click',function(e){var b=e.target.closest('.chk');if(!b)return;var k=b.getAttribute('data-k');if(arrived[k])delete arrived[k];else arrived[k]=Date.now();store('chegadas',arrived);renderAll()});
+
+function wake(){try{if(navigator.wakeLock&&document.visibilityState==='visible')navigator.wakeLock.request('screen').catch(function(){})}catch(e){}}
+wake();document.addEventListener('visibilitychange',wake);
+
+var c=store('lista');if(c&&c.g){guests=c.g}
+renderAll();load();
+})();
+</script>
+</body>
+</html>
