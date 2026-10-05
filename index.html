@@ -88,7 +88,7 @@ var INTERVALO = 10000; /* de quanto em quanto tempo busca as chegadas dos outros
 (function(){
 var guests=[];
 var $=function(id){return document.getElementById(id)};
-function norm(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim()}
+function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim()}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function key(g){return norm(g.n)+'|'+norm(g.m)}
 function mesaSort(a,b){var x=parseFloat(a),y=parseFloat(b);if(!isNaN(x)&&!isNaN(y))return x-y;if(!isNaN(x))return 1;if(!isNaN(y))return -1;return a.localeCompare(b,'pt')}
