@@ -61,6 +61,21 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .table-group h3 small{font:500 .8rem var(--body);color:var(--muted)}
 .table-group ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}
 .table-group li.ok{color:var(--muted);text-decoration:line-through}
+.resumo{margin-top:14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.resumo b{font:700 2.4rem/1 var(--display);color:var(--accent);font-variant-numeric:lining-nums tabular-nums}
+.resumo span{color:var(--muted);font-size:.95rem}
+.grupo{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;gap:10px}
+.grupo h3{margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:600 1.15rem var(--display)}
+.grupo h3 small{font:500 .8rem var(--body);color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:6px;border-radius:999px;background:var(--soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:999px}
+.falta{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding-block:8px;border-top:1px solid var(--line)}
+.falta:first-of-type{border-top:0}
+.falta .fn{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.falta .fq{font-size:.8rem;color:var(--muted);min-width:0}
+.falta .chk{grid-row:span 2;padding:7px 11px;font-size:.8rem}
+.falta .fm{color:var(--accent);font-weight:600}
+.todos{color:var(--ok);font-weight:600;font-size:.9rem}
 </style>
 </head>
 <body>
@@ -70,6 +85,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <div class="search"><input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Nome do convidado" aria-label="Buscar convidado pelo nome"><button id="clear" type="button" aria-label="Limpar busca" hidden>×</button></div>
     <nav class="tabs" role="tablist">
       <button id="tab-busca" role="tab" aria-selected="true" type="button">Buscar</button>
+      <button id="tab-faltam" role="tab" aria-selected="false" type="button">Faltam</button>
       <button id="tab-mesas" role="tab" aria-selected="false" type="button">Mesas</button>
     </nav>
   </header>
@@ -78,6 +94,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <div class="stats"><span id="st-total">Carregando lista…</span><span id="st-chegou"></span></div>
     <div id="results" class="list"></div>
   </section>
+  <section id="v-faltam" hidden><div id="resumo" class="resumo"></div><div id="faltam" class="list"></div></section>
   <section id="v-mesas" hidden><div id="mesas" class="list"></div></section>
   <div class="stats"><span id="st-fonte"></span><button id="reload" type="button">Atualizar lista</button></div>
 </div>
@@ -147,7 +164,24 @@ function renderMesas(){
     return '<div class="table-group"><h3>Mesa '+esc(m)+'<small>'+c+' de '+gs.length+' chegaram</small></h3><ul>'+gs.map(function(g){return '<li class="'+(isArr(g)?'ok':'')+'"><span>'+esc(g.n)+'</span>'+(g.q?'<em>'+esc(g.q)+'</em>':'')+'</li>'}).join('')+'</ul></div>'}).join('')
     :'<div class="empty"><b>Nenhuma mesa ainda</b></div>';
 }
-function renderAll(){renderBusca();renderMesas()}
+var GRUPOS=[['familia','Família'],['padrinhos','Padrinhos e madrinhas'],['convidados','Convidados']];
+var FAMILIA=/^(pai|mae|irma|irmao|avo|bisavo|tio|tia|primo|prima|sogro|sogra|cunhad|filh|sobrinh|neto|neta|genro|nora|padrasto|madrasta|entead|noivo|noiva|famil)/;
+function grupo(g){var q=norm(g.q);if(/padrinh|madrinh/.test(q))return 'padrinhos';if(FAMILIA.test(q))return 'familia';return 'convidados'}
+function renderFaltam(){
+  var total=guests.length,falt=guests.filter(function(g){return !isArr(g)});
+  $('resumo').innerHTML=total?'<b>'+falt.length+'</b><span>'+(falt.length===1?'pessoa ainda não chegou':'pessoas ainda não chegaram')+' de '+total+'</span>':'';
+  if(!total){$('faltam').innerHTML='<div class="empty"><b>Nenhum convidado na lista</b></div>';return}
+  $('faltam').innerHTML=GRUPOS.map(function(G){
+    var todos=guests.filter(function(g){return grupo(g)===G[0]});if(!todos.length)return '';
+    var fs=todos.filter(function(g){return !isArr(g)}).sort(function(a,b){return mesaSort(String(a.m),String(b.m))||a.n.localeCompare(b.n,'pt')});
+    var pct=Math.round((todos.length-fs.length)/todos.length*100);
+    return '<div class="grupo"><h3>'+G[1]+'<small>'+(fs.length?'faltam '+fs.length+' de '+todos.length:todos.length+' de '+todos.length+' chegaram')+'</small></h3>'+
+      '<div class="bar"><i style="width:'+pct+'%"></i></div>'+
+      (fs.length?'<div>'+fs.map(function(g){return '<div class="falta"><span class="fn">'+esc(g.n)+'</span><button class="chk" type="button" data-k="'+esc(key(g))+'">Chegou</button>'+
+        '<span class="fq"><span class="fm">Mesa '+esc(g.m)+'</span>'+(g.q?' · '+esc(g.q):'')+'</span></div>'}).join('')+'</div>':'<div class="todos">✓ Todos chegaram</div>')+'</div>';
+  }).join('');
+}
+function renderAll(){renderBusca();renderFaltam();renderMesas()}
 function hora(t){var d=new Date(t);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
 
 function isArr(g){return SCRIPT?!!g.c:!!arrived[key(g)]}
@@ -179,13 +213,14 @@ function load(silent){
   });
 }
 
-function show(tab){['busca','mesas'].forEach(function(t){$('tab-'+t).setAttribute('aria-selected',t===tab);$('v-'+t).hidden=t!==tab})}
+function show(tab){['busca','faltam','mesas'].forEach(function(t){$('tab-'+t).setAttribute('aria-selected',t===tab);$('v-'+t).hidden=t!==tab})}
 $('tab-busca').onclick=function(){show('busca');$('q').focus()};
 $('tab-mesas').onclick=function(){show('mesas')};
+$('tab-faltam').onclick=function(){show('faltam')};
 $('q').addEventListener('input',function(){show('busca');renderBusca()});
 $('clear').onclick=function(){$('q').value='';renderBusca();$('q').focus()};
 $('reload').onclick=function(){load(false)};
-$('results').addEventListener('click',function(e){
+function onChk(e){
   var b=e.target.closest('.chk');if(!b)return;var k=b.getAttribute('data-k');
   if(!SCRIPT){if(arrived[k])delete arrived[k];else arrived[k]=Date.now();store('chegadas',arrived);renderAll();return}
   var g=guests.filter(function(x){return key(x)===k})[0];if(!g)return;
@@ -198,7 +233,9 @@ $('results').addEventListener('click',function(e){
     delete pend[k];g.c=antes;renderAll();
     $('banner').textContent='Não deu para registrar a chegada de '+g.n+'. Confira a internet e toque de novo.';$('banner').hidden=false;
   });
-});
+}
+$('results').addEventListener('click',onChk);
+$('faltam').addEventListener('click',onChk);
 setInterval(function(){if(SCRIPT&&document.visibilityState==='visible')load(true)},INTERVALO);
 document.addEventListener('visibilitychange',function(){if(SCRIPT&&document.visibilityState==='visible')load(true)});
 
