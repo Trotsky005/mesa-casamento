@@ -2,7 +2,7 @@
  * Mesas Henrique & Livia — script da planilha
  * Cole este código num projeto novo em script.google.com e implante como "App da Web".
  *
- * A planilha precisa das colunas: Nome | Mesa | Chegou  (na primeira aba)
+ * A planilha precisa das colunas: Nome | Mesa | Chegou | Quem é  (na primeira aba)
  */
 
 // Planilha "Mesas do Casamento (site)" no Google Drive
@@ -21,6 +21,7 @@ function doGet(e) {
 function aba() {
   var sh = SpreadsheetApp.openById(PLANILHA_ID).getSheets()[0];
   if (String(sh.getRange(1, 3).getValue()).trim() === '') sh.getRange(1, 3).setValue('Chegou');
+  if (String(sh.getRange(1, 4).getValue()).trim() === '') sh.getRange(1, 4).setValue('Quem é');
   return sh;
 }
 
@@ -29,10 +30,10 @@ function lerLista() {
   var n = sh.getLastRow();
   var lista = [];
   if (n >= 2) {
-    var vals = sh.getRange(2, 1, n - 1, 3).getDisplayValues();
+    var vals = sh.getRange(2, 1, n - 1, 4).getDisplayValues();
     vals.forEach(function (r) {
       var nome = String(r[0]).trim(), mesa = String(r[1]).trim().replace(/^mesa\s*/i, '');
-      if (nome && mesa) lista.push({ n: nome, m: mesa, c: String(r[2]).trim() });
+      if (nome && mesa) lista.push({ n: nome, m: mesa, c: String(r[2]).trim(), q: String(r[3]).trim() });
     });
   }
   return { guests: lista, t: Date.now() };

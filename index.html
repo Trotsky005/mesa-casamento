@@ -47,6 +47,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .guest .mesa b{display:block;font:700 2.6rem/1 var(--display);color:var(--accent);font-variant-numeric:lining-nums tabular-nums}
 .guest .mesa b.long{font-size:1.2rem;line-height:1.2;max-width:120px;overflow-wrap:anywhere}
 .guest .sub{font-size:.85rem;color:var(--muted);min-width:0}
+.role{display:inline-block;margin-top:4px;font:600 .72rem var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--soft);padding:3px 8px;border-radius:999px}
+.table-group li{display:flex;justify-content:space-between;gap:8px}
+.table-group li em{font-style:normal;font-size:.8rem;color:var(--muted);text-align:right}
 .guest .actions{grid-column:1/-1;display:flex;gap:8px;margin-top:6px}
 .chk{font:600 .85rem var(--body);padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
 .chk.on{background:var(--ok);border-color:var(--ok);color:var(--bg)}
@@ -128,11 +131,11 @@ function renderBusca(){
   var box=$('results');
   if(!total){box.innerHTML='<div class="empty"><b>Nenhum convidado na lista</b>Confira a planilha e toque em Atualizar lista.</div>';return}
   if(!q){box.innerHTML='<div class="empty"><b>Digite o nome de quem chegou</b>Pode ser só o primeiro nome ou parte do sobrenome. Acentos não importam.</div>';return}
-  var hits=guests.filter(function(g){var n=norm(g.n);return tokens.every(function(t){return n.indexOf(t)>=0})});
+  var hits=guests.filter(function(g){var n=norm(g.n+' '+(g.q||''));return tokens.every(function(t){return n.indexOf(t)>=0})});
   hits.sort(function(a,b){var na=norm(a.n),nb=norm(b.n);return (na.indexOf(tokens[0])===0?0:1)-(nb.indexOf(tokens[0])===0?0:1)||na.localeCompare(nb)});
   if(!hits.length){box.innerHTML='<div class="empty"><b>Ninguém encontrado</b>Tente só o primeiro nome ou só o sobrenome.</div>';return}
   box.innerHTML=hits.map(function(g){var k=key(g),on=isArr(g),ms=mates(g),m=String(g.m);
-    return '<article class="guest'+(on?' arrived':'')+'"><div class="name">'+highlight(g.n,tokens)+'</div>'+
+    return '<article class="guest'+(on?' arrived':'')+'"><div class="name">'+highlight(g.n,tokens)+(g.q?'<br><span class="role">'+esc(g.q)+'</span>':'')+'</div>'+
       '<div class="mesa"><span>Mesa</span><b class="'+(m.length>3?'long':'')+'">'+esc(m)+'</b></div>'+
       '<div class="sub">'+(ms.length?'Com '+esc(ms.slice(0,4).join(', '))+(ms.length>4?' e mais '+(ms.length-4):''):'Sozinho nesta mesa')+'</div>'+
       '<div class="actions"><button class="chk'+(on?' on':'')+'" type="button" data-k="'+esc(k)+'">'+(on?'✓ Chegou'+(g.c&&g.c.length<=5?' às '+esc(g.c):''):'Marcar chegada')+'</button></div></article>'}).join('');
@@ -141,7 +144,7 @@ function renderMesas(){
   var groups={};guests.forEach(function(g){(groups[g.m]=groups[g.m]||[]).push(g)});
   var ks=Object.keys(groups).sort(mesaSort);
   $('mesas').innerHTML=ks.length?ks.map(function(m){var gs=groups[m].slice().sort(function(a,b){return a.n.localeCompare(b.n,'pt')});var c=gs.filter(function(g){return isArr(g)}).length;
-    return '<div class="table-group"><h3>Mesa '+esc(m)+'<small>'+c+' de '+gs.length+' chegaram</small></h3><ul>'+gs.map(function(g){return '<li class="'+(isArr(g)?'ok':'')+'">'+esc(g.n)+'</li>'}).join('')+'</ul></div>'}).join('')
+    return '<div class="table-group"><h3>Mesa '+esc(m)+'<small>'+c+' de '+gs.length+' chegaram</small></h3><ul>'+gs.map(function(g){return '<li class="'+(isArr(g)?'ok':'')+'"><span>'+esc(g.n)+'</span>'+(g.q?'<em>'+esc(g.q)+'</em>':'')+'</li>'}).join('')+'</ul></div>'}).join('')
     :'<div class="empty"><b>Nenhuma mesa ainda</b></div>';
 }
 function renderAll(){renderBusca();renderMesas()}
