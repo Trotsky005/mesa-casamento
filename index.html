@@ -79,8 +79,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <div class="stats"><span id="st-fonte"></span><button id="reload" type="button">Atualizar lista</button></div>
 </div>
 <script>
-/* De onde vem a lista. Quando a planilha Google for publicada como CSV, cole o link aqui. */
+/* Link do App da Web do Apps Script (termina em /exec). Com ele, lista e chegadas vêm da planilha e são compartilhadas entre todos os celulares.
+   Vazio: usa o arquivo convidados.csv e as chegadas ficam só em cada aparelho. */
+var SCRIPT = '';
 var FONTE = 'convidados.csv';
+var INTERVALO = 10000; /* de quanto em quanto tempo busca as chegadas dos outros celulares (ms) */
 
 (function(){
 var guests=[];
@@ -119,7 +122,7 @@ function mates(g){return guests.filter(function(o){return o!==g&&norm(o.m)===nor
 
 function renderBusca(){
   var q=norm($('q').value),tokens=q?q.split(' '):[];$('clear').hidden=!q;
-  var total=guests.length,cheg=guests.filter(function(g){return arrived[key(g)]}).length;
+  var total=guests.length,cheg=guests.filter(function(g){return isArr(g)}).length;
   $('st-total').textContent=total+(total===1?' convidado':' convidados');
   $('st-chegou').textContent=cheg+' chegaram';
   var box=$('results');
@@ -128,30 +131,43 @@ function renderBusca(){
   var hits=guests.filter(function(g){var n=norm(g.n);return tokens.every(function(t){return n.indexOf(t)>=0})});
   hits.sort(function(a,b){var na=norm(a.n),nb=norm(b.n);return (na.indexOf(tokens[0])===0?0:1)-(nb.indexOf(tokens[0])===0?0:1)||na.localeCompare(nb)});
   if(!hits.length){box.innerHTML='<div class="empty"><b>Ninguém encontrado</b>Tente só o primeiro nome ou só o sobrenome.</div>';return}
-  box.innerHTML=hits.map(function(g){var k=key(g),on=!!arrived[k],ms=mates(g),m=String(g.m);
+  box.innerHTML=hits.map(function(g){var k=key(g),on=isArr(g),ms=mates(g),m=String(g.m);
     return '<article class="guest'+(on?' arrived':'')+'"><div class="name">'+highlight(g.n,tokens)+'</div>'+
       '<div class="mesa"><span>Mesa</span><b class="'+(m.length>3?'long':'')+'">'+esc(m)+'</b></div>'+
       '<div class="sub">'+(ms.length?'Com '+esc(ms.slice(0,4).join(', '))+(ms.length>4?' e mais '+(ms.length-4):''):'Sozinho nesta mesa')+'</div>'+
-      '<div class="actions"><button class="chk'+(on?' on':'')+'" type="button" data-k="'+esc(k)+'">'+(on?'✓ Chegou':'Marcar chegada')+'</button></div></article>'}).join('');
+      '<div class="actions"><button class="chk'+(on?' on':'')+'" type="button" data-k="'+esc(k)+'">'+(on?'✓ Chegou'+(g.c&&g.c.length<=5?' às '+esc(g.c):''):'Marcar chegada')+'</button></div></article>'}).join('');
 }
 function renderMesas(){
   var groups={};guests.forEach(function(g){(groups[g.m]=groups[g.m]||[]).push(g)});
   var ks=Object.keys(groups).sort(mesaSort);
-  $('mesas').innerHTML=ks.length?ks.map(function(m){var gs=groups[m].slice().sort(function(a,b){return a.n.localeCompare(b.n,'pt')});var c=gs.filter(function(g){return arrived[key(g)]}).length;
-    return '<div class="table-group"><h3>Mesa '+esc(m)+'<small>'+c+' de '+gs.length+' chegaram</small></h3><ul>'+gs.map(function(g){return '<li class="'+(arrived[key(g)]?'ok':'')+'">'+esc(g.n)+'</li>'}).join('')+'</ul></div>'}).join('')
+  $('mesas').innerHTML=ks.length?ks.map(function(m){var gs=groups[m].slice().sort(function(a,b){return a.n.localeCompare(b.n,'pt')});var c=gs.filter(function(g){return isArr(g)}).length;
+    return '<div class="table-group"><h3>Mesa '+esc(m)+'<small>'+c+' de '+gs.length+' chegaram</small></h3><ul>'+gs.map(function(g){return '<li class="'+(isArr(g)?'ok':'')+'">'+esc(g.n)+'</li>'}).join('')+'</ul></div>'}).join('')
     :'<div class="empty"><b>Nenhuma mesa ainda</b></div>';
 }
 function renderAll(){renderBusca();renderMesas()}
 function hora(t){var d=new Date(t);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
 
-function load(){
-  $('st-fonte').textContent='Buscando lista…';
-  var url=FONTE+(FONTE.indexOf('?')<0?'?':'&')+'t='+Date.now();
-  fetch(url,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.text()}).then(function(t){
-    var list=parseCSV(t);if(!list.length)throw new Error('vazia');
+function isArr(g){return SCRIPT?!!g.c:!!arrived[key(g)]}
+var pend={}; /* chegadas tocadas aqui que ainda não voltaram da planilha */
+function applyPend(list){list.forEach(function(g){var k=key(g);if(k in pend)g.c=pend[k]});return list}
+function getJSON(params){
+  var url=SCRIPT+(SCRIPT.indexOf('?')<0?'?':'&')+params+'&t='+Date.now();
+  return fetch(url,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(d){if(!d||d.erro||!d.guests)throw new Error(d&&d.erro||'resposta');return d.guests});
+}
+var loading=false;
+function load(silent){
+  if(loading)return;loading=true;
+  if(!silent)$('st-fonte').textContent='Buscando lista…';
+  var req=SCRIPT?getJSON('acao=lista'):fetch(FONTE+(FONTE.indexOf('?')<0?'?':'&')+'t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.text()}).then(parseCSV);
+  req.then(function(list){
+    loading=false;
+    if(!list.length)throw new Error('vazia');
+    list=applyPend(list);
     guests=list;store('lista',{g:list,t:Date.now()});$('banner').hidden=true;
-    $('st-fonte').textContent='Lista atualizada '+hora(Date.now());renderAll();
+    $('st-fonte').textContent=(SCRIPT?'Sincronizado ':'Lista atualizada ')+hora(Date.now());renderAll();
   }).catch(function(){
+    loading=false;
+    if(silent&&guests.length){$('st-fonte').textContent='Sem conexão agora. Tentando de novo…';return}
     var c=store('lista');
     if(c&&c.g){guests=c.g;$('st-fonte').textContent='Sem internet: usando a lista salva '+hora(c.t);}
     else{$('st-fonte').textContent='';}
@@ -165,14 +181,29 @@ $('tab-busca').onclick=function(){show('busca');$('q').focus()};
 $('tab-mesas').onclick=function(){show('mesas')};
 $('q').addEventListener('input',function(){show('busca');renderBusca()});
 $('clear').onclick=function(){$('q').value='';renderBusca();$('q').focus()};
-$('reload').onclick=load;
-$('results').addEventListener('click',function(e){var b=e.target.closest('.chk');if(!b)return;var k=b.getAttribute('data-k');if(arrived[k])delete arrived[k];else arrived[k]=Date.now();store('chegadas',arrived);renderAll()});
+$('reload').onclick=function(){load(false)};
+$('results').addEventListener('click',function(e){
+  var b=e.target.closest('.chk');if(!b)return;var k=b.getAttribute('data-k');
+  if(!SCRIPT){if(arrived[k])delete arrived[k];else arrived[k]=Date.now();store('chegadas',arrived);renderAll();return}
+  var g=guests.filter(function(x){return key(x)===k})[0];if(!g)return;
+  var antes=g.c||'',novo=antes?'':new Date().toTimeString().slice(0,5);
+  g.c=novo;pend[k]=novo;renderAll();
+  getJSON('acao=chegada&valor='+(novo?'1':'0')+'&nome='+encodeURIComponent(g.n)+'&mesa='+encodeURIComponent(g.m)).then(function(list){
+    delete pend[k];guests=applyPend(list);store('lista',{g:guests,t:Date.now()});
+    $('st-fonte').textContent='Sincronizado '+hora(Date.now());renderAll();
+  }).catch(function(){
+    delete pend[k];g.c=antes;renderAll();
+    $('banner').textContent='Não deu para registrar a chegada de '+g.n+'. Confira a internet e toque de novo.';$('banner').hidden=false;
+  });
+});
+setInterval(function(){if(SCRIPT&&document.visibilityState==='visible')load(true)},INTERVALO);
+document.addEventListener('visibilitychange',function(){if(SCRIPT&&document.visibilityState==='visible')load(true)});
 
 function wake(){try{if(navigator.wakeLock&&document.visibilityState==='visible')navigator.wakeLock.request('screen').catch(function(){})}catch(e){}}
 wake();document.addEventListener('visibilitychange',wake);
 
 var c=store('lista');if(c&&c.g){guests=c.g}
-renderAll();load();
+renderAll();load(false);
 })();
 </script>
 </body>
