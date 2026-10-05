@@ -67,7 +67,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .grupo{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;gap:10px}
 .grupo h3{margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:600 1.15rem var(--display)}
 .grupo h3 small{font:500 .8rem var(--body);color:var(--muted);font-variant-numeric:tabular-nums}
-.bar{height:6px;border-radius:999px;background:var(--soft);overflow:hidden}
+.bar{display:block;height:6px;border-radius:999px;background:var(--soft);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--ok);border-radius:999px}
 .falta{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding-block:8px;border-top:1px solid var(--line)}
 .falta:first-of-type{border-top:0}
@@ -76,6 +76,18 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .falta .chk{grid-row:span 2;padding:7px 11px;font-size:.8rem}
 .falta .fm{color:var(--accent);font-weight:600}
 .todos{color:var(--ok);font-weight:600;font-size:.9rem}
+.ghead{all:unset;cursor:pointer;display:grid;gap:10px;width:100%}
+.ghead:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:8px}
+.gt{display:flex;justify-content:space-between;align-items:center;font:600 1.15rem var(--display);color:var(--ink)}
+.gt i{font-style:normal;font-family:var(--body);font-size:1.4rem;color:var(--muted);transition:transform .2s}
+.grupo.open .gt i{transform:rotate(90deg)}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.nums span{display:grid;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.nums b{font:700 1.7rem/1.1 var(--display);color:var(--ink);font-variant-numeric:lining-nums tabular-nums;letter-spacing:0;text-transform:none}
+.nums b.ok{color:var(--ok)}.nums b.pend{color:var(--accent)}
+.gbody{border-top:1px solid var(--line);padding-top:6px}
+.sec{margin:8px 0 2px;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.falta.ja .fn{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -167,18 +179,26 @@ function renderMesas(){
 var GRUPOS=[['familia','Família'],['padrinhos','Padrinhos e madrinhas'],['convidados','Convidados']];
 var FAMILIA=/^(pai|mae|irma|irmao|avo|bisavo|tio|tia|primo|prima|sogro|sogra|cunhad|filh|sobrinh|neto|neta|genro|nora|padrasto|madrasta|entead|noivo|noiva|famil)/;
 function grupo(g){var q=norm(g.q);if(/padrinh|madrinh/.test(q))return 'padrinhos';if(FAMILIA.test(q))return 'familia';return 'convidados'}
+var abertos={};
 function renderFaltam(){
   var total=guests.length,falt=guests.filter(function(g){return !isArr(g)});
   $('resumo').innerHTML=total?'<b>'+falt.length+'</b><span>'+(falt.length===1?'pessoa ainda não chegou':'pessoas ainda não chegaram')+' de '+total+'</span>':'';
   if(!total){$('faltam').innerHTML='<div class="empty"><b>Nenhum convidado na lista</b></div>';return}
+  function linha(g){var on=isArr(g);return '<div class="falta'+(on?' ja':'')+'"><span class="fn">'+esc(g.n)+'</span><button class="chk'+(on?' on':'')+'" type="button" data-k="'+esc(key(g))+'">'+(on?'✓ '+(g.c&&g.c.length<=5?esc(g.c):'Chegou'):'Chegou')+'</button>'+
+    '<span class="fq"><span class="fm">Mesa '+esc(g.m)+'</span>'+(g.q?' · '+esc(g.q):'')+'</span></div>'}
+  function ord(a,b){return mesaSort(String(a.m),String(b.m))||a.n.localeCompare(b.n,'pt')}
   $('faltam').innerHTML=GRUPOS.map(function(G){
     var todos=guests.filter(function(g){return grupo(g)===G[0]});if(!todos.length)return '';
-    var fs=todos.filter(function(g){return !isArr(g)}).sort(function(a,b){return mesaSort(String(a.m),String(b.m))||a.n.localeCompare(b.n,'pt')});
-    var pct=Math.round((todos.length-fs.length)/todos.length*100);
-    return '<div class="grupo"><h3>'+G[1]+'<small>'+(fs.length?'faltam '+fs.length+' de '+todos.length:todos.length+' de '+todos.length+' chegaram')+'</small></h3>'+
-      '<div class="bar"><i style="width:'+pct+'%"></i></div>'+
-      (fs.length?'<div>'+fs.map(function(g){return '<div class="falta"><span class="fn">'+esc(g.n)+'</span><button class="chk" type="button" data-k="'+esc(key(g))+'">Chegou</button>'+
-        '<span class="fq"><span class="fm">Mesa '+esc(g.m)+'</span>'+(g.q?' · '+esc(g.q):'')+'</span></div>'}).join('')+'</div>':'<div class="todos">✓ Todos chegaram</div>')+'</div>';
+    var fs=todos.filter(function(g){return !isArr(g)}).sort(ord),js=todos.filter(isArr).sort(ord);
+    var pct=Math.round(js.length/todos.length*100),open=!!abertos[G[0]];
+    return '<div class="grupo'+(open?' open':'')+'"><button class="ghead" type="button" data-g="'+G[0]+'" aria-expanded="'+open+'">'+
+      '<span class="gt">'+G[1]+'<i aria-hidden="true">›</i></span>'+
+      '<span class="nums"><span><b>'+todos.length+'</b>total</span><span><b class="ok">'+js.length+'</b>chegaram</span><span><b class="pend">'+fs.length+'</b>faltam</span></span>'+
+      '<span class="bar"><i style="width:'+pct+'%"></i></span></button>'+
+      (open?'<div class="gbody">'+
+        (fs.length?'<p class="sec">Faltam chegar</p><div>'+fs.map(linha).join('')+'</div>':'<div class="todos">✓ Todos chegaram</div>')+
+        (js.length?'<p class="sec">Já chegaram</p><div>'+js.map(linha).join('')+'</div>':'')+
+      '</div>':'')+'</div>';
   }).join('');
 }
 function renderAll(){renderBusca();renderFaltam();renderMesas()}
@@ -235,7 +255,7 @@ function onChk(e){
   });
 }
 $('results').addEventListener('click',onChk);
-$('faltam').addEventListener('click',onChk);
+$('faltam').addEventListener('click',function(e){var h=e.target.closest('.ghead');if(h){var g=h.getAttribute('data-g');abertos[g]=!abertos[g];renderFaltam();return}onChk(e)});
 setInterval(function(){if(SCRIPT&&document.visibilityState==='visible')load(true)},INTERVALO);
 document.addEventListener('visibilitychange',function(){if(SCRIPT&&document.visibilityState==='visible')load(true)});
 
