@@ -88,6 +88,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gbody{border-top:1px solid var(--line);padding-top:6px}
 .sec{margin:8px 0 2px;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .falta.ja .fn{color:var(--muted)}
+.cheia{font:600 .7rem var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--ok);margin-left:8px}
+.gt{gap:8px}
+.gt i{margin-left:auto}
 </style>
 </head>
 <body>
@@ -169,12 +172,26 @@ function renderBusca(){
       '<div class="sub">'+(ms.length?'Com '+esc(ms.slice(0,4).join(', '))+(ms.length>4?' e mais '+(ms.length-4):''):'Sozinho nesta mesa')+'</div>'+
       '<div class="actions"><button class="chk'+(on?' on':'')+'" type="button" data-k="'+esc(k)+'">'+(on?'✓ Chegou'+(g.c&&g.c.length<=5?' às '+esc(g.c):''):'Marcar chegada')+'</button></div></article>'}).join('');
 }
+var mesasAbertas={};
 function renderMesas(){
   var groups={};guests.forEach(function(g){(groups[g.m]=groups[g.m]||[]).push(g)});
   var ks=Object.keys(groups).sort(mesaSort);
-  $('mesas').innerHTML=ks.length?ks.map(function(m){var gs=groups[m].slice().sort(function(a,b){return a.n.localeCompare(b.n,'pt')});var c=gs.filter(function(g){return isArr(g)}).length;
-    return '<div class="table-group"><h3>Mesa '+esc(m)+'<small>'+c+' de '+gs.length+' chegaram</small></h3><ul>'+gs.map(function(g){return '<li class="'+(isArr(g)?'ok':'')+'"><span>'+esc(g.n)+'</span>'+(g.q?'<em>'+esc(g.q)+'</em>':'')+'</li>'}).join('')+'</ul></div>'}).join('')
-    :'<div class="empty"><b>Nenhuma mesa ainda</b></div>';
+  if(!ks.length){$('mesas').innerHTML='<div class="empty"><b>Nenhuma mesa ainda</b></div>';return}
+  function ord(a,b){return a.n.localeCompare(b.n,'pt')}
+  function linha(g){var on=isArr(g);return '<div class="falta'+(on?' ja':'')+'"><span class="fn">'+esc(g.n)+'</span><button class="chk'+(on?' on':'')+'" type="button" data-k="'+esc(key(g))+'">'+(on?'✓ '+(g.c&&g.c.length<=5?esc(g.c):'Chegou'):'Chegou')+'</button>'+
+    '<span class="fq">'+(g.q?esc(g.q):'&nbsp;')+'</span></div>'}
+  $('mesas').innerHTML=ks.map(function(m){
+    var gs=groups[m],fs=gs.filter(function(g){return !isArr(g)}).sort(ord),js=gs.filter(isArr).sort(ord);
+    var pct=Math.round(js.length/gs.length*100),open=!!mesasAbertas[m];
+    return '<div class="grupo'+(open?' open':'')+'"><button class="ghead" type="button" data-m="'+esc(m)+'" aria-expanded="'+open+'">'+
+      '<span class="gt">Mesa '+esc(m)+(fs.length?'':' <small class="cheia">completa</small>')+'<i aria-hidden="true">›</i></span>'+
+      '<span class="nums"><span><b>'+gs.length+'</b>total</span><span><b class="ok">'+js.length+'</b>chegaram</span><span><b class="pend">'+fs.length+'</b>faltam</span></span>'+
+      '<span class="bar"><i style="width:'+pct+'%"></i></span></button>'+
+      (open?'<div class="gbody">'+
+        (fs.length?'<p class="sec">Faltam chegar</p><div>'+fs.map(linha).join('')+'</div>':'<div class="todos">✓ Todos chegaram</div>')+
+        (js.length?'<p class="sec">Já chegaram</p><div>'+js.map(linha).join('')+'</div>':'')+
+      '</div>':'')+'</div>';
+  }).join('');
 }
 var GRUPOS=[['familia','Família'],['padrinhos','Padrinhos e madrinhas'],['convidados','Convidados']];
 var FAMILIA=/^(pai|mae|irma|irmao|avo|bisavo|tio|tia|primo|prima|sogro|sogra|cunhad|filh|sobrinh|neto|neta|genro|nora|padrasto|madrasta|entead|noivo|noiva|famil)/;
@@ -236,6 +253,7 @@ function load(silent){
 function show(tab){['busca','faltam','mesas'].forEach(function(t){$('tab-'+t).setAttribute('aria-selected',t===tab);$('v-'+t).hidden=t!==tab})}
 $('tab-busca').onclick=function(){show('busca');$('q').focus()};
 $('tab-mesas').onclick=function(){show('mesas')};
+$('mesas').addEventListener('click',function(e){var h=e.target.closest('.ghead');if(h){var m=h.getAttribute('data-m');mesasAbertas[m]=!mesasAbertas[m];renderMesas();return}onChk(e)});
 $('tab-faltam').onclick=function(){show('faltam')};
 $('q').addEventListener('input',function(){show('busca');renderBusca()});
 $('clear').onclick=function(){$('q').value='';renderBusca();$('q').focus()};
